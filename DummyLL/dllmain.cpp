@@ -24,9 +24,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
     switch (ul_reason_for_call) {
         case DLL_PROCESS_ATTACH:
-            //file = std::ofstream(R"(D:\Afonso\Documents\GitHub\DLL Stuff\x64\Debug\teste.log)", std::ios::out);
-            
-
             GetModuleFileNameW(hModule, moduleFileName, MAX_PATH);
 
             path = std::filesystem::path(moduleFileName).parent_path() / LOG_FILE_NAME;

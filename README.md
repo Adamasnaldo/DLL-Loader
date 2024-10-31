@@ -1,5 +1,10 @@
 # DLL-Loader
-Simple program written in C++ to start a program and inject DLLs, or inject them into already running processes.
+
+[![ci](https://github.com/Adamasnaldo/DLL-Loader/actions/workflows/msbuild.yml/badge.svg)](https://github.com/Adamasnaldo/DLL-Loader/actions/workflows/msbuild.yml)
+[![Releases](https://img.shields.io/github/v/release/Adamasnaldo/DLL-Loader?style=flat-square)](https://github.com/Adamasnaldo/DLL-Loader/releases)
+[![License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg?style=flat-square)](LICENSE)
+
+Simple program written in C++ to start a program and inject DLLs, or optionally inject them into already running processes.
 
 # Table of Contents
 1. [Solution Structure](#solution-structure)

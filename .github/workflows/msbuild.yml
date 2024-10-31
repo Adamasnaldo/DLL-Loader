@@ -1,0 +1,141 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Create new release
+
+on:
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: "Architecture"
+        required: true
+        default: "x64"
+        type: choice
+        options:
+          - x64
+          - x86
+      build_config:
+        description: "Build configuration"
+        required: true
+        default: "Release"
+        type: choice
+        options:
+          - Release
+          - Debug
+      version:
+        description: "Version for the new release"
+        required: true
+        default: "1.0.0"
+        type: string
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: ${{ github.workspace }}
+
+  # Architecture of the build
+  ARCH: ${{ inputs.arch }}
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: ${{ inputs.build_config }}
+
+  # Indicates the location of the vcpkg as a Git submodule of the project repository.
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+  # Release version
+  VERSION: ${{ inputs.version }}
+
+  # Output directory
+  OUTPUT_DIR: ${{ github.workspace }}/${{ inputs.ARCH }}/${{ inputs.build_config }}
+
+jobs:
+  build:
+    name: Build ${{ inputs.VERSION }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest ]
+        include:
+          - os: windows-latest
+            triplet: ${{ inputs.ARCH }}-windows
+
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        repository: 'microsoft/vcpkg'
+        path: vcpkg
+        submodules: true
+        ref: "2024.07.12"
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+      with:
+        vs-version: '17.0'
+        msbuild-architecture: ${{ env.ARCH }}
+
+    # Restore both vcpkg and its artifacts from the GitHub cache service.
+    - name: Restore vcpkg and its artifacts
+      uses: actions/cache@v4
+      with:
+        # The first path is where vcpkg generates artifacts while consuming the vcpkg.json manifest file.
+        # The second path is the location of vcpkg (it contains the vcpkg executable and data files).
+        # The other paths starting with '!' are exclusions: they contain termporary files generated during the build of the installed packages.
+        path: |
+          ${{ env.SOLUTION_FILE_PATH }}/vcpkg_installed/
+          ${{ env.VCPKG_ROOT }}
+          !${{ env.VCPKG_ROOT }}/buildtrees
+          !${{ env.VCPKG_ROOT }}/downloads
+          !${{ env.VCPKG_ROOT }}/packages
+        # The key is composed in a way that it gets properly invalidated: this must happen whenever vcpkg's Git commit id changes, or the list of packages changes. In this case a cache miss must happen and a new entry with a new key with be pushed to GitHub the cache service.
+        # The key includes: hash of the vcpkg.json file, the hash of the vcpkg Git commit id, and the used vcpkg's triplet. The vcpkg's commit id would suffice, but computing an hash out it does not harm.
+        # Note: given a key, the cache content is immutable. If a cache entry has been created improperly, in order the recreate the right content the key must be changed as well, and it must be brand new (i.e. not existing already).
+        key: |
+          ${{ hashFiles( 'vcpkg.json' ) }}-${{ matrix.triplet }}-invalidate
+
+    - name: Install vcpkg
+      run: |
+        cd vcpkg
+        git fetch --all
+        ./bootstrap-vcpkg.bat
+        vcpkg integrate install
+
+    - name: Install dependencies with vcpkg
+      run: |
+        vcpkg install
+
+    - name: Build
+      working-directory: ${{ env.GITHUB_WORKSPACE }}
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} ${{ env.SOLUTION_FILE_PATH }}
+
+    - name: Print out dir
+      run: find ./${{ env.ARCH }} -type f
+      shell: bash
+
+    - name: Zip output
+      run: |
+        tar -c -z -v -f "${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}.tar.gz" config_default.toml -C "${{ env.OUTPUT_DIR }}" "DLL Loader.exe" "fmt.dll"
+      
+    - name: Create New Release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ${{ env.OUTPUT_DIR }}/DLL Loader.exe
+          ${{ env.OUTPUT_DIR }}/DummyEXE.exe
+          ${{ env.OUTPUT_DIR }}/DummyLL.dll
+          ${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}.tar.gz
+        fail_on_unmatched_files: true
+        name: Version ${{ env.VERSION }}
+        tag_name: v${{ env.VERSION }}
+        draft: false
+        prerelease: false
