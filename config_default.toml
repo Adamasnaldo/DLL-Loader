@@ -1,0 +1,88 @@
+[Logging]
+
+## Enables logging
+# Setting type: Boolean
+# Default value: true
+# Disabling this ignores both values defined below for console and disk
+Enabled = true
+
+## Which log level to show when logging
+# Setting type: String
+# Default value: Debug
+# It uses spdlog, which means setting a level enables all of the previous ones
+# Acceptable values in level order: Off, Critical, Error, Warn, Info, Debug, Trace, All
+LogLevel = "Debug"
+
+## Which log level to flush on when logging
+# Setting type: String
+# Default value: Info
+# It uses spdlog, which means setting a level flushes on all of the previous ones
+# Acceptable values in level order: Off, Critical, Error, Warn, Info, Debug, Trace, All
+FlushOn = "Info"
+
+[Logging.Console]
+
+## Enables showing a console for log output.
+# Setting type: Boolean
+# Default value: false
+Enabled = false
+
+[Logging.Disk]
+
+## Enables writing log messages to disk.
+# Setting type: Boolean
+# Default value: true
+Enabled = true
+
+## Appends to the log file instead of overwriting.
+# Setting type: Boolean
+# Default value: false
+AppendLog = false
+
+## File where to write.
+# Setting type: String
+# Default value: dll_loader.log
+# It uses std::strftime so you can use things such as '%F'
+LogFile = 'dll_loader.log'
+
+[DllLoader.Injector]
+
+## Enables recursive search on directories
+# Setting type: Boolean
+# Default value: false
+RecurseSubdirectories = false
+
+## List of directories to search for modules (.dll)
+# Setting type: List
+# Default value: [ ]
+IncludeDirectories = [
+]
+
+## List of file names (.dll) to exclude when searching in directories
+# Setting type: List
+# Default value: [ ]
+# This will exclude any file with this name, no matter where it is located
+ExcludeFileNames = [
+]
+
+## List of file paths (.dll) to exclude when searching in directories
+# Setting type: List
+# Default value: [ ]
+# This will exclude only the exact files that corresponds to the given paths
+ExcludeFilePaths = [
+]
+
+## List of single modules to load in addition to previously found modules
+# Setting type: List
+# Default value: [ ]
+# !! These ignore ExcludeFiles, and will load regardless of being there or not
+# !! These will ignore the extension, meaning you can inject whatever you want
+ExternalModules = [
+]
+
+[DllLoader]
+
+## Path to executable to run. If the program is already running, it will inject in that instance.
+# Setting type: String
+# Default value: No default value, this is mandatory
+#ExecutablePath = 'Path:\to\program.exe'
