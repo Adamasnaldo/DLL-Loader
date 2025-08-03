@@ -1,9 +1,10 @@
 #include "Injector.hpp"
+#include "Util/error.hpp"
 #include "Util/toml.hpp"
 
 #include <spdlog/spdlog.h>
 
-#define ERR_RETURN( MSG, RET ) spdlog::error("{} ({})", MSG, GetLastError()); return RET;
+#define ERR_RETURN( MSG, RET ) spdlog::error("{}: ( {} -> {})", MSG, GetLastError(), Util::GetLastErrorAsString()); return RET;
 #define ERR_RETURN_FALSE( MSG ) ERR_RETURN(MSG, FALSE);
 #define ERR_FREE_RETURN_FALSE( H_PROCESS, LP_ADDRESS, DW_SIZE, DW_FREE_TYPE, MSG ) VirtualFreeEx(H_PROCESS, LP_ADDRESS, DW_SIZE, DW_FREE_TYPE); ERR_RETURN_FALSE(MSG);
 
@@ -137,7 +138,12 @@ namespace DllLoader {
         len_t totalLen = 0;
         std::wstring buffer = L"";  // Buffer used to write all dlls
 
-        const auto dllPaths = this->calculateDlls( );
+        const std::unordered_set<std::wstring> dllPaths = this->calculateDlls( );
+        if (dllPaths.size() <= 0) {
+            spdlog::error("No dlls found to inject?");
+
+            return FALSE;
+        }
 
         spdlog::info("| The following dlls will be injected:");
         for (const std::wstring& path : dllPaths) {

@@ -80,5 +80,8 @@
     <ClInclude Include="Log\Logger.hpp">
       <Filter>Header Files\Log</Filter>
     </ClInclude>
+    <ClInclude Include="Util\error.hpp">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -158,6 +158,7 @@
     <ClInclude Include="Injector.hpp" />
     <ClInclude Include="Log\Logger.hpp" />
     <ClInclude Include="SettingsLoader.hpp" />
+    <ClInclude Include="Util\error.hpp" />
     <ClInclude Include="Util\string_helper.hpp" />
     <ClInclude Include="Util\system.hpp" />
     <ClInclude Include="Util\toml.hpp" />

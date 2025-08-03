@@ -105,26 +105,48 @@ jobs:
         cd vcpkg
         git fetch --all
         ./bootstrap-vcpkg.bat
-        vcpkg integrate install
+        ${{ env.VCPKG_ROOT }}\vcpkg.exe integrate install --vcpkg-root "${{ env.VCPKG_ROOT }}"
 
     - name: Install dependencies with vcpkg
       run: |
-        vcpkg install
+        cd vcpkg
+        ${{ env.VCPKG_ROOT }}\vcpkg.exe install --vcpkg-root "${{ env.VCPKG_ROOT }}"
 
     - name: Build
       working-directory: ${{ env.GITHUB_WORKSPACE }}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} ${{ env.SOLUTION_FILE_PATH }}
+      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /v:diag ${{ env.SOLUTION_FILE_PATH }}
 
     - name: Print out dir
-      run: find ./${{ env.ARCH }} -type f
       shell: bash
+      run: find ./${{ env.ARCH }} -type f
 
     - name: Zip output
+      shell: pwsh
       run: |
-        tar -c -z -v -f "${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}.tar.gz" config_default.toml -C "${{ env.OUTPUT_DIR }}" "DLL Loader.exe" "fmt.dll"
-      
+        7z a "${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}.zip" config_default.toml "${{ env.OUTPUT_DIR }}/DLL Loader.exe" "${{ env.OUTPUT_DIR }}/fmt.dll"
+
+    # I'll leave these two options here, in case I want to use them in the future
+    # - name: Create output tar
+    #   shell: pwsh
+    #   run: |
+    #     tar -c -z -v -f "${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}.tar.gz" config_default.toml -C "${{ env.OUTPUT_DIR }}" "DLL Loader.exe" "fmt.dll"
+
+    # - name: Zip but with python
+    #   shell: python
+    #   run: |
+    #     import os
+    #     import zipfile
+    #     zf = zipfile.ZipFile(r"${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}-2.zip", mode="w")
+    #     for filename in (
+    #       "config_default.toml",
+    #       r"${{ env.OUTPUT_DIR }}/DLL Loader.exe",
+    #       r"${{ env.OUTPUT_DIR }}/fmt.dll"
+    #     ):
+    #       zf.write(filename, arcname = os.path.basename(filename))
+    #     zf.close()
+
     - name: Create New Release
       id: create_release
       uses: softprops/action-gh-release@v2
@@ -133,7 +155,7 @@ jobs:
           ${{ env.OUTPUT_DIR }}/DLL Loader.exe
           ${{ env.OUTPUT_DIR }}/DummyEXE.exe
           ${{ env.OUTPUT_DIR }}/DummyLL.dll
-          ${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}.tar.gz
+          ${{ env.OUTPUT_DIR }}/DLL-Loader-${{ env.VERSION }}.zip
         fail_on_unmatched_files: true
         name: Version ${{ env.VERSION }}
         tag_name: v${{ env.VERSION }}

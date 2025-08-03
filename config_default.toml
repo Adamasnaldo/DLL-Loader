@@ -85,4 +85,4 @@ ExternalModules = [
 ## Path to executable to run. If the program is already running, it will inject in that instance.
 # Setting type: String
 # Default value: No default value, this is mandatory
-#ExecutablePath = 'Path:\to\program.exe'
+ExecutablePath = 'Path:\to\program.exe'
